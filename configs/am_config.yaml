@@ -1,0 +1,10 @@
+ct_model_path: /path/to/ctranslate2/model
+ct2_model_path: /path/to/ct2/model
+sp_model_path: /path/to/sentencepiece/model
+src_lang: en
+tgt_lang: am
+dataset:
+  path: /path/to/hf/dataset
+  src_col: source_column_name
+  tgt_col: target_column_name
+log_file: logs/en_am_eval.log
