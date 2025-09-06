@@ -1,0 +1,12 @@
+ctranslate2==4.6.0
+datasets==3.6.0
+huggingface-hub==0.34.4
+pandas==2.3.2
+pytorch-lightning==2.5.4
+sacrebleu==2.5.1
+sentencepiece==0.2.1
+torch==2.8.0
+torchmetrics==0.10.3
+tqdm==4.67.1
+transformers==4.56.1
+unbabel-comet==2.2.7
