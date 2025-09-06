@@ -41,7 +41,7 @@ def load_models(ct_model_path, sp_model_path):
     translator = ctranslate2.Translator(ct_model_path, device=device)   
     return sp, translator
 
-def generate_translations(sp, translator, src_lang, tgt_lang, source_sentences, beam_size=2):
+def generate_translations(sp, translator, src_lang, tgt_lang, source_sentences, batch_size=2048, beam_size=2):
     source_sents = [sent.strip() for sent in source_sentences]
     target_prefix = [[tgt_lang]] * len(source_sents)
     source_sents_subworded = sp.encode_as_pieces(source_sents)
@@ -49,7 +49,7 @@ def generate_translations(sp, translator, src_lang, tgt_lang, source_sentences, 
     translations = translator.translate_batch(
         source_sents_subworded,
         batch_type="tokens",
-        max_batch_size=1024,
+        max_batch_size=batch_size,
         beam_size=beam_size,
         target_prefix=target_prefix
     )
@@ -75,7 +75,8 @@ def evaluate_model(source_sentences, translations, references, comet_model, logg
     df = pd.DataFrame({"src":source_sentences, "mt":translations, "ref":references})
     data = df.to_dict(orient="records")
     seg_score, sys_score = comet_model.predict(data, batch_size=16, gpus=1 if torch.cuda.is_available() else 0) 
-    comet_score = round(sys_score[0], 2)
+    print(sys_score, type(sys_score))
+    comet_score = round(float(sys_score)*100, 2)
     logger.info(f"COMET: {comet_score}")
 
     return bleu, chrf, ter, comet_score
@@ -102,6 +103,8 @@ def main():
     tgt_config = config["dataset"]["tgt_config"]
     text_col = config["dataset"].get("text_col", "sentence")
     split = config["dataset"].get("split", "test")
+    batch_size = config.get("batch_size", 2048)
+    beam_size = config.get("beam_size", 2)
 
     logger.info(f"Loading dataset from {dataset_path} (split: {split})")
     ds_src= load_dataset(dataset_path, src_config, split=split, trust_remote_code=True)
@@ -113,7 +116,7 @@ def main():
     comet_model = load_comet_model(comet_model_name)
 
     logger.info("Generating translations...")
-    translations = generate_translations(sp, translator, src_lang, tgt_lang, source_sentences)
+    translations = generate_translations(sp, translator, src_lang, tgt_lang, source_sentences, batch_size=batch_size, beam_size=beam_size)
 
     logger.info("Evaluating translations...")
     evaluate_model(source_sentences, translations, reference_sentences, comet_model, logger)

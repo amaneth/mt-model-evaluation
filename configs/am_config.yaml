@@ -1,6 +1,8 @@
 ct2_model_path: ct2/ct2-nllb-200-3.3B-int8
 sp_model_path: sp/sentencepiece.bpe.model
 comet_model_name: Unbabel/wmt22-comet-da
+batch_size: 512
+beam_size: 5
 src_lang: en
 tgt_lang: am
 dataset:
