@@ -1,10 +1,12 @@
-ct_model_path: /path/to/ctranslate2/model
-ct2_model_path: /path/to/ct2/model
-sp_model_path: /path/to/sentencepiece/model
+ct2_model_path: ct2/ct2-nllb-200-3.3B-int8
+sp_model_path: sp/sentencepiece.bpe.model
+comet_model_name: Unbabel/wmt22-comet-da
 src_lang: en
 tgt_lang: am
 dataset:
-  path: /path/to/hf/dataset
-  src_col: source_column_name
-  tgt_col: target_column_name
+  path: facebook/flores
+  src_config: "eng_Latn"
+  tgt_config: "amh_Ethi"
+  text_col: "sentence"
+  split: devtest
 log_file: logs/en_am_eval.log

@@ -10,7 +10,10 @@ from logging import handlers
 
 from datasets import load_dataset
 
+import os
+
 def setup_logger(log_file):
+    os.makedirs(os.path.dirname(log_file), exist_ok=True)
     logger = logging.getLogger("mt-eval")
     logger.setLevel(logging.INFO)
     formatter = logging.Formatter(
@@ -24,7 +27,7 @@ def setup_logger(log_file):
     logger.addHandler(sh)
     return logger
 
-def load_comet_model(model_name="wmt22-comet-qe-da"):
+def load_comet_model(model_name="Unbabel/wmt22-comet-da"):
     from comet import download_model, load_from_checkpoint
 
     model_path = download_model(model_name)
@@ -46,7 +49,7 @@ def generate_translations(sp, translator, src_lang, tgt_lang, source_sentences, 
     translations = translator.translate_batch(
         source_sents_subworded,
         batch_type="tokens",
-        max_batch_size=2024,
+        max_batch_size=1024,
         beam_size=beam_size,
         target_prefix=target_prefix
     )
@@ -91,21 +94,23 @@ def main():
 
     ct_model_path = config.get("ct_model_path") or config.get("ct2_model_path")
     sp_model_path = config["sp_model_path"]
+    comet_model_name = config.get("comet_model_name", "Unbabel/wmt22-comet-da")
     src_lang = config["src_lang"]
     tgt_lang = config["tgt_lang"]
     dataset_path = config["dataset"]["path"]
-    src_col = config["dataset"]["src_col"]
-    tgt_col = config["dataset"]["tgt_col"]
+    src_config = config["dataset"]["src_config"]
+    tgt_config = config["dataset"]["tgt_config"]
+    text_col = config["dataset"].get("text_col", "sentence")
     split = config["dataset"].get("split", "test")
 
     logger.info(f"Loading dataset from {dataset_path} (split: {split})")
-    dataset = load_dataset(dataset_path, split=split)
-    source_sentences = dataset[src_col]
-    reference_sentences = dataset[tgt_col]
-
+    ds_src= load_dataset(dataset_path, src_config, split=split, trust_remote_code=True)
+    ds_tgt= load_dataset(dataset_path, tgt_config, split=split, trust_remote_code=True)
+    source_sentences = ds_src[text_col]
+    reference_sentences = ds_tgt[text_col]
     logger.info("Loading models...")
     sp, translator = load_models(ct_model_path, sp_model_path)
-    comet_model = load_comet_model()
+    comet_model = load_comet_model(comet_model_name)
 
     logger.info("Generating translations...")
     translations = generate_translations(sp, translator, src_lang, tgt_lang, source_sentences)
