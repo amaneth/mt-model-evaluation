@@ -55,7 +55,7 @@ def generate_translations(sp, translator, src_lang, tgt_lang, source_sentences, 
     )
     translations = [translation.hypotheses[0] for translation in translations]
     translations_desubword = sp.decode(translations)
-    translations_desubword = [sent[len(tgt_lang):].strip() for sent in translations_desubword]
+    translations_desubword = [sent[len(tgt_lang):].strip() for sent in translations_desubword]  
     return translations_desubword
 
 def evaluate_model(source_sentences, translations, references, comet_model, logger):
@@ -74,9 +74,8 @@ def evaluate_model(source_sentences, translations, references, comet_model, logg
 
     df = pd.DataFrame({"src":source_sentences, "mt":translations, "ref":references})
     data = df.to_dict(orient="records")
-    seg_score, sys_score = comet_model.predict(data, batch_size=16, gpus=1 if torch.cuda.is_available() else 0) 
-    print(sys_score, type(sys_score))
-    comet_score = round(float(sys_score)*100, 2)
+    comet_output= comet_model.predict(data, batch_size=16, gpus=1 if torch.cuda.is_available() else 0) 
+    comet_score = round(comet_output["system_score"]*100, 2)
     logger.info(f"COMET: {comet_score}")
 
     return bleu, chrf, ter, comet_score
